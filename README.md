@@ -1,37 +1,132 @@
-# RAISEBOX_FAUCET
+# Protocol Name 
 
-## Token Information
-- **Token Name:** RAISEBOX TOKEN  
-- **Token Symbol:** RB  
+Raisebox faucet
 
-## Faucet Overview
-The RaiseBox Faucet allows testers of the RaiseBox contract to obtain **test tokens** for testing purposes.
+- Starts: October 09, 2025 Noon UTC
+- Ends: October 16, 2025 Noon UTC
 
-### Sepolia ETH Drip
-- First-time interactors with this faucet contract also receive a **Sepolia ETH drip of 0.01 ETH** alongside faucet tokens.  
-- The Sepolia ETH drip is intended to enable future users of the contract to test the functionalities of the token and the contract.
+- nSLOC: 157
 
-### Faucet Rules
-- Testers can only request tokens from this faucet **once every 3 days (72 hours)**.  
-- There is a **minimum withdrawal amount of 1000 tokens**,for each request.  
-- Only the **faucet owner** can mint or burn tokens. The contract ensures that there is always enough token balance to satisfy requested withdrawals.
+[//]: # (contest-details-open)
 
-### Donations
-- Users can **donate Sepolia ETH** to this contract. These donations are used to fund the Sepolia ETH drip function.  
-- Donations are appreciated and can be sent either **directly** or via **external contracts** to this contract.
+## About the Project
 
-## Faucet Contract Functions
+This section should give auditors a feeling for what the protocol does, it's primary functions and the goals it hopes to achieve. Can include links to project websites or docs
 
-| Function | Visibility | Description |
-|----------|------------|-------------|
-| `constructor(uint256 _faucetDrip, uint256 _dailyClaimLimit, uint256 _sepEthAmountToDrip, uint256 _dailyEthCap)` | public | Initializes faucet parameters with configurable values instead of hardcoded constants. |
-| `requestTokens()` | public | Allows a user to claim faucet tokens and Sepolia ETH drip, enforcing claim limits and cooldowns. |
-| `donateEth()` | public payable | Lets users donate Sepolia ETH to fund the ETH drip pool. |
-| `mint(address to, uint256 amount)` | onlyOwner | Mints new tokens, restricted to the contract owner. |
-| `burn(address from, uint256 amount)` | onlyOwner | Burns tokens from a specified address, restricted to the owner. |
-| `withdrawEth(address payable to, uint256 amount)` | onlyOwner | Withdraws Sepolia ETH from the contract to a given address. |
-| `setFaucetDrip(uint256 _faucetDrip)` | onlyOwner | Updates the faucet token drip amount. |
-| `setDailyClaimLimit(uint256 _dailyClaimLimit)` | onlyOwner | Updates the daily token claim limit. |
-| `setSepEthAmountToDrip(uint256 _sepEthAmountToDrip)` | onlyOwner | Updates the Sepolia ETH drip amount per claim. |
-| `setDailyEthCap(uint256 _dailyEthCap)` | onlyOwner | Updates the daily Sepolia ETH drip cap. |
+```
+About 
 
+RaiseBox Faucet is a token drip faucet that drips 1000 test tokens to users every 3 days. It also drips 0.005 sepolia eth to first time users.
+
+The faucet tokens will be useful for testing the testnet of a future protocol that would only allow interactions using this tokens.
+
+[Documentation](www.GitHub.com/oxcoda/RaiseboxFaucet_ff/README.md)
+[Website](https://sepolia.etherscan.io/address/0xb0ca2ae586b1ccf5ead5634ac14bdc50bbb5d138#readContract)
+[Twitter](www.twitter.com/0xebby_)
+[GitHub](www.gitHub.com/oxcoda)
+
+```
+
+## Actors
+
+```
+
+There are basically 3 actors in this protocol:
+
+1. owner: 
+RESPONSIBILITIES:
+
+- deploys contract, 
+- mint initial supply and any new token in future, 
+- can burn tokens, 
+- can adjust daily claim limit, 
+- can refill sepolia eth balance
+
+LIMITATIONS: 
+
+- cannot claimfaucet tokens
+
+
+2. claimer: 
+RESPONSIBILITIES:
+
+- can claim tokens by calling the claimFaucetTokens function of this contract.
+
+LIMITATIONS: 
+
+- Doesn't have any owner defined rights above.
+
+3. Donators:
+RESPONSIBILITIES:
+- can donate sepolia eth directly to contract
+
+```
+
+[//]: # (contest-details-close)
+
+[//]: # (scope-open)
+
+## Scope (contracts)
+
+SCOPE:
+
+
+```
+src/
+├── RaiseBoxFaucet.sol
+├── DeployRaiseBoxFaucet.s.sol
+
+```
+
+## Compatibilities
+
+```
+Compatibilities:
+
+  Blockchains:
+      - Ethereum/EVM
+  Tokens:
+      - SEP ETH
+```
+
+[//]: # (scope-close)
+
+
+[//]: # (getting-started-open)
+
+## Setup
+
+Build:
+
+```
+git clone https://github.com/CodeHawks-Contests/2025-10-raisebox-faucet.git
+
+forge init
+
+forge install OpenZeppelin/openzeppelin-contracts
+
+forge install forge std
+
+forge build
+
+```
+
+Tests:
+
+```
+Forge test
+
+```
+
+[//]: # (getting-started-close)
+
+[//]: # (known-issues-open)
+
+## Known Issues
+
+Known Issues:
+
+No known issue.
+
+`
+[//]: # (known-issues-close)
