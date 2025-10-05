@@ -17,18 +17,14 @@ RaiseBox Faucet is a token drip faucet that drips 1000 test tokens to users ever
 
 The faucet tokens will be useful for testing the testnet of a future protocol that would only allow interactions using this tokens.
 
-- [Documentation](www.GitHub.com/oxcoda/RaiseboxFaucet_ff/README.md)
-- [Website](https://sepolia.etherscan.io/address/0xb0ca2ae586b1ccf5ead5634ac14bdc50bbb5d138#readContract)
-- [Twitter](www.twitter.com/0xebby_)
-- [GitHub](www.gitHub.com/oxcoda)
-
 
 ## Actors
 
 There are basically 3 actors in this protocol:
 
-1. owner: 
-RESPONSIBILITIES:
+## 1. Owner: 
+
+#### RESPONSIBILITIES:
 
 - deploys contract, 
 - mint initial supply and any new token in future, 
@@ -36,22 +32,24 @@ RESPONSIBILITIES:
 - can adjust daily claim limit, 
 - can refill sepolia eth balance
 
-LIMITATIONS: 
+#### LIMITATIONS: 
 
 - cannot claimfaucet tokens
 
 
-2. claimer: 
-RESPONSIBILITIES:
+## 2. Claimer: 
+
+#### RESPONSIBILITIES:
 
 - can claim tokens by calling the claimFaucetTokens function of this contract.
 
-LIMITATIONS: 
+#### LIMITATIONS: 
 
 - Doesn't have any owner defined rights above.
 
-3. Donators:
-RESPONSIBILITIES:
+## 3. Donators:
+
+#### RESPONSIBILITIES:
 - can donate sepolia eth directly to contract
 
 
@@ -60,9 +58,6 @@ RESPONSIBILITIES:
 [//]: # (scope-open)
 
 ## Scope (contracts)
-
-SCOPE:
-
 
 ```
 src/
@@ -73,12 +68,10 @@ src/
 
 ## Compatibilities
 
-Compatibilities:
-
-  Blockchains:
-      - Ethereum/EVM
-  Tokens:
-      - SEP ETH
+- Blockchains:
+  - Ethereum/EVM
+- Tokens:
+  - SEP ETH
 
 [//]: # (scope-close)
 
