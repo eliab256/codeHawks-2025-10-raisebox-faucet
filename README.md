@@ -17,10 +17,10 @@ RaiseBox Faucet is a token drip faucet that drips 1000 test tokens to users ever
 
 The faucet tokens will be useful for testing the testnet of a future protocol that would only allow interactions using this tokens.
 
-[Documentation](www.GitHub.com/oxcoda/RaiseboxFaucet_ff/README.md)
-[Website](https://sepolia.etherscan.io/address/0xb0ca2ae586b1ccf5ead5634ac14bdc50bbb5d138#readContract)
-[Twitter](www.twitter.com/0xebby_)
-[GitHub](www.gitHub.com/oxcoda)
+- [Documentation](www.GitHub.com/oxcoda/RaiseboxFaucet_ff/README.md)
+- [Website](https://sepolia.etherscan.io/address/0xb0ca2ae586b1ccf5ead5634ac14bdc50bbb5d138#readContract)
+- [Twitter](www.twitter.com/0xebby_)
+- [GitHub](www.gitHub.com/oxcoda)
 
 
 ## Actors
@@ -96,7 +96,7 @@ forge init
 
 forge install OpenZeppelin/openzeppelin-contracts
 
-forge install forge std
+forge install forge-std
 
 forge build
 
