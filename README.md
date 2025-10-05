@@ -11,9 +11,6 @@ Raisebox faucet
 
 ## About the Project
 
-This section should give auditors a feeling for what the protocol does, it's primary functions and the goals it hopes to achieve. Can include links to project websites or docs
-
-```
 About 
 
 RaiseBox Faucet is a token drip faucet that drips 1000 test tokens to users every 3 days. It also drips 0.005 sepolia eth to first time users.
@@ -25,11 +22,8 @@ The faucet tokens will be useful for testing the testnet of a future protocol th
 [Twitter](www.twitter.com/0xebby_)
 [GitHub](www.gitHub.com/oxcoda)
 
-```
 
 ## Actors
-
-```
 
 There are basically 3 actors in this protocol:
 
@@ -60,7 +54,6 @@ LIMITATIONS:
 RESPONSIBILITIES:
 - can donate sepolia eth directly to contract
 
-```
 
 [//]: # (contest-details-close)
 
@@ -80,14 +73,12 @@ src/
 
 ## Compatibilities
 
-```
 Compatibilities:
 
   Blockchains:
       - Ethereum/EVM
   Tokens:
       - SEP ETH
-```
 
 [//]: # (scope-close)
 
@@ -126,7 +117,6 @@ Forge test
 
 Known Issues:
 
-No known issue.
+No known issues.
 
-`
 [//]: # (known-issues-close)
