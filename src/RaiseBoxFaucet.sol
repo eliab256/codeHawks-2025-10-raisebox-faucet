@@ -108,7 +108,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @dev Can only mint to the contract itself
     /// @param to Address that will receive minted tokens (must be the contract itself)
     /// @param amount Number of tokens to mint
-
+    //@audit-issue to non necessario
     function mintFaucetTokens(address to, uint256 amount) public onlyOwner {
         if (to != address(this)) {
             revert RaiseBoxFaucet_MiningToNonContractAddressFailed();
@@ -127,6 +127,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @dev Transfers tokens to owner first, then burns from owner
     /// @param amountToBurn Amount of tokens to burn
     //@audit-issue owner can transfer to itself all the balance  while buirning only one token
+    //@audit-issue POC done
     function burnFaucetTokens(uint256 amountToBurn) public onlyOwner {
         require(amountToBurn <= balanceOf(address(this)), "Faucet Token Balance: Insufficient");
 

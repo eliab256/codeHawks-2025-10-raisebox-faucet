@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.30;
 
-import {Test, console} from "../lib/lib/forge-std/src/Test.sol";
+import {Test, console, console2} from "../lib/lib/forge-std/src/Test.sol";
 import {RaiseBoxFaucet} from "../src/RaiseBoxFaucet.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {DeployRaiseboxContract} from "../script/DeployRaiseBoxFaucet.s.sol";
@@ -820,4 +820,24 @@ contract TestRaiseBoxFaucet is Test {
             "Token Mint: Supply should equal amount minted"
         );
     }
+    
+    //POC 1
+    function testOwnerCanClaimAlmostAllTheSupplyBurningOneToken() public {
+        vm.startPrank(owner);
+        //burn 1 token to avoid revert on the require balance < 1000 * 10 ** 18
+        raiseBoxFaucet.burnFaucetTokens(1);
+        uint256 allTokenMintable = type(uint256).max - raiseBoxFaucet.totalSupply();
+        uint256 initialOwnerBalance = raiseBoxFaucet.balanceOf(owner);
+
+        //mint all possible tokens
+        raiseBoxFaucet.mintFaucetTokens(address(raiseBoxFaucet), allTokenMintable);
+
+        //burn 1 token and transfer all the token on owner balance
+        raiseBoxFaucet.burnFaucetTokens(1);
+
+        console.log("owner Balance: ", raiseBoxFaucet.balanceOf(owner));
+        console.log("result:        ", initialOwnerBalance + allTokenMintable -1);
+        assertEq(raiseBoxFaucet.balanceOf(owner), initialOwnerBalance + allTokenMintable -1);
+    }
+
 }
