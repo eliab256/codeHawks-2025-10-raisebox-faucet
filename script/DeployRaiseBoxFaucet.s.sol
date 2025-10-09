@@ -12,9 +12,9 @@ contract DeployRaiseboxContract is Script {
         raiseBox = new RaiseBoxFaucet(
             "raiseboxtoken",
             "RB",
-            1000 * 10 ** 18,
-            0.005 ether,
-            1 ether
+            1000 * 10 ** 18,  //Number of tokens dispensed per claim
+            0.005 ether,    //Amount of Sepolia ETH dripped per first-time claim
+            1 ether         //Maximum Sepolia ETH distributed per day
         );
         vm.stopBroadcast();
     }

@@ -9,12 +9,14 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     // state variables....
 
     mapping(address => uint256) private lastClaimTime;
+    //@audit-issue mapping superfluo SE lastClaimTime non viene resettato
     mapping(address => bool) private hasClaimedEth;
 
     address public faucetClaimer;
 
     uint256 public constant CLAIM_COOLDOWN = 3 days;
 
+    //@audit-issue on default value we have  dailyClaimLimit minore di faucetDrip, farà sempre revert
     uint256 public dailyClaimLimit = 100;
 
     //= 1000 * 10 ** 18;
@@ -51,6 +53,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @param sepEthDrip_ Amount of Sepolia ETH dripped per first-time claim
     /// @param dailySepEthCap_ Maximum Sepolia ETH distributed per day
 
+    //@audit-issue no requires for drips parameters, checks vulnerabilities
     constructor(
         string memory name_,
         string memory symbol_,
@@ -123,7 +126,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @notice Burns faucet tokens held by the contract
     /// @dev Transfers tokens to owner first, then burns from owner
     /// @param amountToBurn Amount of tokens to burn
-
+    //@audit-issue owner can transfer to itself all the balance  while buirning only one token
     function burnFaucetTokens(uint256 amountToBurn) public onlyOwner {
         require(amountToBurn <= balanceOf(address(this)), "Faucet Token Balance: Insufficient");
 
@@ -138,7 +141,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @dev Increases or decreases the `dailyClaimLimit` by the given amount
     /// @param by The amount to adjust the `dailyClaimLimit` by
     /// @param increaseClaimLimit Set to true to increase, false to decrease
-
+    // @audit-issue owner can set daily limit with no limits, it can be endless or zero
     function adjustDailyClaimLimit(uint256 by, bool increaseClaimLimit) public onlyOwner {
         if (increaseClaimLimit) {
             dailyClaimLimit += by;
@@ -160,6 +163,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
 
     function claimFaucetTokens() public {
         // Checks
+        //@audit-issue high vulnerability. fuacetClaimer non deve essere in storage ma locale!
         faucetClaimer = msg.sender;
 
         // (lastClaimTime[faucetClaimer] == 0);
@@ -167,7 +171,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         if (block.timestamp < (lastClaimTime[faucetClaimer] + CLAIM_COOLDOWN)) {
             revert RaiseBoxFaucet_ClaimCooldownOn();
         }
-
+        //@audit-issue Ownable.owner is wrong. owner() is the right call. Test what happen on tests
         if (faucetClaimer == address(0) || faucetClaimer == address(this) || faucetClaimer == Ownable.owner()) {
             revert RaiseBoxFaucet_OwnerOrZeroOrContractAddressCannotCallClaim();
         }
@@ -175,10 +179,11 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         if (balanceOf(address(this)) <= faucetDrip) {
             revert RaiseBoxFaucet_InsufficientContractBalance();
         }
-
+        //@audit-issue capire bene cosa fanno le due variabili (check audit DOS??)
         if (dailyClaimCount >= dailyClaimLimit) {
             revert RaiseBoxFaucet_DailyClaimLimitReached();
         }
+        //finished main checks
 
         // drip sepolia eth to first time claimers if supply hasn't ran out or sepolia drip not paused**
         // still checks
@@ -194,7 +199,8 @@ contract RaiseBoxFaucet is ERC20, Ownable {
             if (dailyDrips + sepEthAmountToDrip <= dailySepEthCap && address(this).balance >= sepEthAmountToDrip) {
                 hasClaimedEth[faucetClaimer] = true;
                 dailyDrips += sepEthAmountToDrip;
-
+                //@audit-issue call che non checca i data, posso usare una callback con selfDestruct!!!! posso anche mettere delegate call nella mia fallback e fargli chiamare quello che voglio?
+                //@audit-issue reentrancy vulnerable
                 (bool success,) = faucetClaimer.call{value: sepEthAmountToDrip}("");
 
                 if (success) {
@@ -209,6 +215,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
                 );
             }
         } else {
+            //@audit-issue azzera contatore anche se non deve
             dailyDrips = 0;
         }
 
@@ -228,6 +235,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         dailyClaimCount++;
 
         // Interactions
+        //@audit-issue occhio che non è transferFrom e  non controlla neanche se fallisce o ha successo.
         _transfer(address(this), faucetClaimer, faucetDrip);
 
         emit Claimed(msg.sender, faucetDrip);
@@ -235,6 +243,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
 
     /// @notice Refill Sepolia ETH into the faucet contract
     /// @param amountToRefill Amount of ETH being refilled (must equal msg.value)
+    // @audit-issue amountToRefill not necessary, just use msg.value
     function refillSepEth(uint256 amountToRefill) external payable onlyOwner {
         require(amountToRefill > 0, "invalid eth amount");
 
