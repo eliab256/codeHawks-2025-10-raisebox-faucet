@@ -180,7 +180,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         if (balanceOf(address(this)) <= faucetDrip) {
             revert RaiseBoxFaucet_InsufficientContractBalance();
         }
-        //@audit-issue capire bene cosa fanno le due variabili (check audit DOS??)
+        //@audit-issue capire bene cosa fanno le due variabili (check audit DOS??) 
         if (dailyClaimCount >= dailyClaimLimit) {
             revert RaiseBoxFaucet_DailyClaimLimitReached();
         }
