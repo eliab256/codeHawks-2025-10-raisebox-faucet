@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Test, console, console2} from "../lib/lib/forge-std/src/Test.sol";
 import {RaiseBoxFaucet} from "../src/RaiseBoxFaucet.sol";
+import {RaiseBoxFaucetSecured} from "../src/RaiseBoxFaucetSecured.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {DeployRaiseboxContract} from "../script/DeployRaiseBoxFaucet.s.sol";
 
@@ -15,6 +16,7 @@ contract TestRaiseBoxFaucet is Test {
     RaiseBoxFaucet raiseBoxFaucet;
     DeployRaiseboxContract raiseBoxDeployer;
     FaucetAttacker faucetAttacker;
+    RaiseBoxFaucetSecured raiseBoxFaucetSecured;
 
     // Test: Users
     address user1 = makeAddr("user1");
@@ -272,7 +274,10 @@ contract TestRaiseBoxFaucet is Test {
         uint256 amountOfFaucetTokensPerClaim = raiseBoxFaucet.faucetDrip();
 
         vm.prank(user1);
+        uint256 gasBefore = gasleft();
         raiseBoxFaucet.claimFaucetTokens();
+        uint256 gasAfter = gasleft();
+        console2.log("normal operation gas cost:", gasBefore- gasAfter);
 
         assertEq(
             raiseBoxFaucet.getBalance(user1),
@@ -842,33 +847,109 @@ contract TestRaiseBoxFaucet is Test {
 
         //burn 1 token and transfer all the token on owner balance
         raiseBoxFaucet.burnFaucetTokens(1);
+        vm.stopPrank();
 
         console.log("owner Balance: ", raiseBoxFaucet.balanceOf(owner));
         console.log("result:        ", initialOwnerBalance + allTokenMintable -1);
         assertEq(raiseBoxFaucet.balanceOf(owner), initialOwnerBalance + allTokenMintable -1);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        raiseBoxFaucet.claimFaucetTokens();
+
+
     }
 
     //POC2
-    function testReentrancyVulnerabilityOnClaimFaucetTokens() public {
-        vm.deal(attacker, 1 ether);
-        uint256 faucetInitialBalance = address(raiseBoxFaucet).balance;
-        uint256 attackerInitialBalance = address(raiseBoxFaucet).balance;
+    // function testReentrancyVulnerabilityOnClaimFaucetTokens() public {
+    //     raiseBoxFaucet2 = new RaiseBoxFaucet(
+    //     //FaucetAttacker faucetAttacker;
+    //     FaucetAttacker faucetAttacker2;
+    //     FaucetAttacker faucetAttacker3;
 
-        vm.startPrank(attacker);
-        faucetAttacker = new FaucetAttacker{value: 0.9 ether}(address(raiseBoxFaucet));
-        faucetAttacker.attack();
-        vm.stopPrank();
-
-        uint256 faucetFinalBalance = address(raiseBoxFaucet).balance;
-        uint256 attackerFinalBalance = address(raiseBoxFaucet).balance;
-        uint256 stolenEthAmount = faucetInitialBalance - faucetFinalBalance;
+    //     vm.deal(attacker, 100 ether);
+    //     uint256 faucetInitialBalance = address(raiseBoxFaucet).balance;
+    //     uint256 attackerInitialBalance = address(raiseBoxFaucet).balance;
         
-        console2.log("initial faucet balance:        ", faucetFinalBalance);
-        console2.log("final faucet balance:          ", faucetFinalBalance);
-        console2.log("eth amount to send every time:   ", raiseBoxFaucet.sepEthAmountToDrip() );
+    //     vm.startPrank(attacker);
+    //     faucetAttacker = new FaucetAttacker{value: 99 ether}(address(raiseBoxFaucet));
 
-        //assertTrue(faucetFinalBalance < raiseBoxFaucet.sepEthAmountToDrip());
-        //assertEq(attackerFinalBalance , attackerInitialBalance + stolenEthAmount);
+    //     //I use low level call to avoid revert 
+    //     uint gasStart = gasleft();
+    //     // (bool ok, bytes memory res) =  address(faucetAttacker).call(abi.encodeWithSignature("attack()"));
+    //     // (bool ok2, bytes memory res2) =  address(faucetAttacker).call(abi.encodeWithSignature("attack()"));
+    //     // (bool ok3, bytes memory res3) =  address(faucetAttacker).call(abi.encodeWithSignature("attack()"));
+    //     faucetAttacker.attack();
+   
+    //     uint gasEnd = gasleft();
+
+    //     faucetAttacker2 = new FaucetAttacker{value: 99 ether}(address(raiseBoxFaucet));
+    //     faucetAttacker2.attack();
+    //     faucetAttacker3 = new FaucetAttacker{value: 99 ether}(address(raiseBoxFaucet));
+    //     faucetAttacker3.attack();
+    //     vm.stopPrank();
+        
+    //     uint256 gasUsed = gasStart - gasEnd;
+
+    //     uint256 faucetFinalBalance = address(raiseBoxFaucet).balance;
+    //     uint256 attackerFinalBalance = address(raiseBoxFaucet).balance;
+    //     uint256 stolenEthAmount = faucetInitialBalance - faucetFinalBalance;
+        
+    //     //is out of gas
+    //     console2.log("gas used: ", gasUsed);
+    //     console2.log("gas limit:", block.gaslimit);
+    //     //ogni chiamata cosa 309 di gas fee amount
+
+    //     assertTrue(faucetFinalBalance < raiseBoxFaucet.sepEthAmountToDrip());
+    //     assertEq(attackerFinalBalance , attackerInitialBalance + stolenEthAmount);
+    // }
+
+    function testIfburnModdifyWorks() public {
+        vm.prank(owner);
+        raiseBoxFaucetSecured = new RaiseBoxFaucetSecured("raiseboxtoken",
+            "RB",
+            1000 * 10 ** 18,  //Number of tokens dispensed per claim
+            0.005 ether,    //Amount of Sepolia ETH dripped per first-time claim
+            1 ether );
+        raiseBoxFaucetSecured.burnFaucetTokens(1);
+        assertEq(raiseBoxFaucetSecured.balanceOf(address(raiseBoxFaucetSecured)), 1000000000 * 10 ** 18-1); 
+    }
+
+    function testIfDOSHappenDueToDailyClaimCountEqualDailyClaimLimit() public {
+        vm.prank(owner);
+        raiseBoxFaucet.adjustDailyClaimLimit(98, false); //now dailyClaimLimit is 2 to semplify the test
+
+        //reaching dailyClaimLimit 
+        vm.prank(user1);
+        raiseBoxFaucet.claimFaucetTokens();
+        vm.prank(user2);
+        raiseBoxFaucet.claimFaucetTokens();
+
+        //try to call faucet again but will fail
+        vm.prank(user3);
+        vm.expectRevert();
+        raiseBoxFaucet.claimFaucetTokens();
+
+        //move more than 24 hours ahead (should reset the counter)
+        vm.warp(block.timestamp + 25 hours);
+
+        //now counter should reset and let user3 claim his token, but it will not work
+        vm.prank(user3);
+        vm.expectRevert();
+        raiseBoxFaucet.claimFaucetTokens();
+
+        assertEq(raiseBoxFaucet.dailyClaimCount(), 2);
+        assertEq(raiseBoxFaucet.dailyClaimCount(), raiseBoxFaucet.dailyClaimLimit());
+
+        //to fix this owner have to increase dailyClaimLimit to let complete the function 
+        //execution and reset the counter
+        vm.prank(owner);
+        raiseBoxFaucet.adjustDailyClaimLimit(10, true); //increase the daily limit
+
+        vm.prank(user3);
+        raiseBoxFaucet.claimFaucetTokens();
+
+        assertEq(raiseBoxFaucet.dailyClaimCount(), 1); //counter has been reset and then added 1
     }
 
 }

