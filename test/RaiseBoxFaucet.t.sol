@@ -10,12 +10,12 @@ import {DeployRaiseboxContract} from "../script/DeployRaiseBoxFaucet.s.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {FaucetAttacker} from "./FaucetAttacker.sol";
+import {AttackerMainContract} from "./AttackerContract.sol";
 
 contract TestRaiseBoxFaucet is Test {
     RaiseBoxFaucet raiseBoxFaucet;
     DeployRaiseboxContract raiseBoxDeployer;
-    FaucetAttacker faucetAttacker;
+    AttackerMainContract attackerMainContract;
     RaiseBoxFaucetSecured raiseBoxFaucetSecured;
 
     // Test: Users
@@ -950,6 +950,36 @@ contract TestRaiseBoxFaucet is Test {
         raiseBoxFaucet.claimFaucetTokens();
 
         assertEq(raiseBoxFaucet.dailyClaimCount(), 1); //counter has been reset and then added 1
+    }
+
+    function testReentrancy() public {
+        //preparation
+        vm.startPrank(owner);
+        raiseBoxFaucet.burnFaucetTokens(1);
+        raiseBoxFaucet.mintFaucetTokens(address(raiseBoxFaucet), 1000000000000 * 10 **18);
+        vm.stopPrank();
+        uint256 attackerInitialTokenBalance = raiseBoxFaucet.balanceOf(attacker);
+        uint256 contractInitialTokenBalance = raiseBoxFaucet.balanceOf(address(raiseBoxFaucet));
+        uint256 attackerInitialEthBalance = attacker.balance;
+        uint256 contractInitialEthBalance = address(raiseBoxFaucet).balance;
+
+        vm.startPrank(attacker);
+        attackerMainContract = new AttackerMainContract(address(raiseBoxFaucet));
+        attackerMainContract.attack();
+        vm.stopPrank();
+
+        assertEq(raiseBoxFaucet.balanceOf(address(attacker)), 
+            attackerInitialTokenBalance + (raiseBoxFaucet.faucetDrip() * raiseBoxFaucet.dailyClaimLimit())); 
+        assertEq(address(attacker).balance, attackerInitialEthBalance + (raiseBoxFaucet.sepEthAmountToDrip() * 50) );
+
+        vm.prank(user1);
+        vm.expectRevert();
+        raiseBoxFaucet.claimFaucetTokens();
+
+        vm.prank(user2);
+        vm.expectRevert();
+        raiseBoxFaucet.claimFaucetTokens();
+        
     }
 
 }
