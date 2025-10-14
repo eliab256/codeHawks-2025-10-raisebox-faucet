@@ -963,10 +963,15 @@ contract TestRaiseBoxFaucet is Test {
         uint256 attackerInitialEthBalance = attacker.balance;
         uint256 contractInitialEthBalance = address(raiseBoxFaucet).balance;
 
+        vm.txGasPrice(20 gwei);
+        uint256 gasBefore  = gasleft();
         vm.startPrank(attacker);
         attackerMainContract = new AttackerMainContract(address(raiseBoxFaucet));
         attackerMainContract.attack();
         vm.stopPrank();
+        uint256 gasAfter  = gasleft();
+        
+
 
         assertEq(raiseBoxFaucet.balanceOf(address(attacker)), 
             attackerInitialTokenBalance + (raiseBoxFaucet.faucetDrip() * raiseBoxFaucet.dailyClaimLimit())); 
@@ -979,6 +984,22 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(user2);
         vm.expectRevert();
         raiseBoxFaucet.claimFaucetTokens();
+
+        //gas and profitability report
+
+        uint256 gasUsed = gasBefore - gasAfter;
+        uint256 gasCostWei = gasUsed * tx.gasprice;
+
+        uint256 ethGained = attacker.balance - attackerInitialEthBalance + gasCostWei;
+        uint256 netProfitEth;
+        unchecked{
+            netProfitEth = ethGained - gasCostWei;
+        } 
+        bool isProfitable;
+        if(netProfitEth  < ethGained){
+            isProfitable = true;
+        }
+        assertEq(isProfitable, true);
         
     }
 
