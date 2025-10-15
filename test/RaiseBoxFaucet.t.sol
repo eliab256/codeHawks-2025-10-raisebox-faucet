@@ -921,7 +921,9 @@ contract TestRaiseBoxFaucet is Test {
         uint256 attackerInitialEthBalance = attacker.balance;
         //uint256 contractInitialEthBalance = address(raiseBoxFaucet).balance;
 
-        vm.txGasPrice(54 gwei);
+        uint256 gasPriceSettingInGwei = 8; // 1 Gwei
+        uint256 gasPriceInWei = gasPriceSettingInGwei * 1 gwei; // wei conversion
+        vm.txGasPrice(gasPriceInWei);
         uint256 gasBefore  = gasleft();
         vm.startPrank(attacker);
         attackerMainContract = new AttackerMainContract(address(raiseBoxFaucet));
@@ -949,7 +951,7 @@ contract TestRaiseBoxFaucet is Test {
         uint256 gasUsed = gasBefore - gasAfter;
         uint256 gasCostWei = gasUsed * tx.gasprice;
 
-        uint256 ethGained = attacker.balance - attackerInitialEthBalance + gasCostWei;
+        uint256 ethGained = attacker.balance - attackerInitialEthBalance;
         uint256 netProfitEth;
         unchecked{
             netProfitEth = ethGained - gasCostWei;
@@ -957,7 +959,15 @@ contract TestRaiseBoxFaucet is Test {
         bool isProfitable;
         if(netProfitEth  < ethGained){
             isProfitable = true;
-        }
+        } 
+        
+        console2.log("GAS PRICE IN WEI SETTING: ", gasPriceInWei);
+        console2.log("GAS PRICE IN GWEI SETTING: ", gasPriceSettingInGwei);
+        console2.log("gas used:          ", gasUsed);
+        console2.log("total cost in Wei: ",gasCostWei);
+        console2.log("ethGained:         ", ethGained);
+        console2.log("is profitable: ", isProfitable);
+        console2.log("netProfit in wei:  ", netProfitEth);
         assertEq(isProfitable, true);
         
     }
@@ -972,10 +982,16 @@ contract TestRaiseBoxFaucet is Test {
         // attackerInitialTokenBalance is 0 
         uint256 attackerInitialEthBalance = attacker.balance;
 
-        vm.txGasPrice(150 gwei);
+        uint256 gasPriceSettingInGwei = 1; // 1 Gwei
+        uint256 gasPriceInWei = gasPriceSettingInGwei * 1 gwei; // wei conversion
+        vm.txGasPrice(gasPriceInWei);
         uint256 gasBefore  = gasleft();
         vm.startPrank(attacker);
         attackerCrossReentrnatContract = new AttackerCrossReentrnatContract(address(raiseBoxFaucet));
+        (uint256 numberOfContracts,) = attackerCrossReentrnatContract.getNumberOfContract();
+        attackerCrossReentrnatContract.deployAttackers(numberOfContracts / 2);
+        attackerCrossReentrnatContract.deployAttackers(numberOfContracts / 2);
+        attackerCrossReentrnatContract.setupChain();
         attackerCrossReentrnatContract.attack();
         vm.stopPrank();
         uint256 gasAfter  = gasleft();
@@ -1008,10 +1024,13 @@ contract TestRaiseBoxFaucet is Test {
         if(netProfitEth  < ethGained){
             isProfitable = true;
         }
+        
         assertEq(isProfitable, true);
+        console2.log("GAS PRICE IN WEI SETTING: ", gasPriceSettingInGwei);
         console2.log("gas used:          ", gasUsed);
         console2.log("total cost in Wei: ",gasCostWei);
         console2.log("ethGained:         ", ethGained);
+        console2.log("is profitable: ", isProfitable);
         console2.log("netProfit:         ", netProfitEth);
         
     }
